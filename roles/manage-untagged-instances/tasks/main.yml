@@ -16,7 +16,7 @@
     set_fact:
       aws_instance_ids: "{{ aws_instances | json_query(aws_query) }}"
     vars:
-      aws_query: "instances[?tags.AlwaysUp!=('True' && 'true' && 'TRUE' && 'yes' && 'Yes' && 'YES')].instance_id"
+      aws_query: "instances[?tags.AlwaysUp!='True']|[?tags.AlwaysUp!='TRUE']|[?tags.AlwaysUp!='true']|[?tags.AlwaysUp!='YES']|[?tags.AlwaysUp!='Yes']|[?tags.AlwaysUp!='yes'].instance_id"
 
   - name: "{{ aws_region }}: Log aws_instance_ids"
     debug:
