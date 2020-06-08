@@ -1,0 +1,96 @@
+---
+- name: Query All Instances in Region {{ aws_region }}
+  ec2_instance_info:
+    region: "{{ aws_region }}"
+  register: instance_results
+
+- name: "DEBUG: instance_results"
+  debug:
+    var: instance_results
+    verbosity: 2
+
+- name: "DEBUG: Show Instances Missing AlwaysUp Tag"
+  debug:
+    msg: "Instance {{ item.tags.Name }} is missing tag AlwaysUp"
+    verbosity: 2
+  with_items:
+    - "{{ instance_results.instances }}"
+  when: item.tags.AlwaysUp is undefined
+
+- name: Reset instance_map
+  set_fact:
+    instance_map: []
+
+- name: Build Instance ID and Tag Dictionary for Easy Lookup
+  set_fact:
+    instance_map: >-
+      {{
+        instance_map +
+        [
+          {
+            'id': item.instance_id,
+            'AlwaysUp_tolower': item.tags.AlwaysUp | lower,
+            'AlwaysUp': item.tags.AlwaysUp
+          }
+        ]
+      }}
+  with_items:
+    - "{{ instance_results.instances }}"
+  when: item.tags.AlwaysUp is defined
+
+- name: "DEBUG: instance_map"
+  debug:
+    var: instance_map
+    verbosity: 2
+
+- name: Normalize AlwaysUp Tag for Negative Values
+  ec2_tag:
+    region: "{{ aws_region }}"
+    resource: "{{ item.id }}"
+    state: present
+    tags:
+      AlwaysUp: "false"
+  with_items:
+    - "{{ instance_map }}"
+  when: 
+    - item.AlwaysUp != 'false' 
+    - (item.AlwaysUp_tolower == 'false') or (item.AlwaysUp_tolower == 'no')
+
+- name: Normalize AlwaysUp Tag for Positive Values
+  ec2_tag:
+    region: "{{ aws_region }}"
+    resource: "{{ item.id }}"
+    state: present
+    tags:
+      AlwaysUp: "true"
+  with_items:
+    - "{{ instance_map }}"
+  when:
+    - item.AlwaysUp != 'true'
+    - (item.AlwaysUp_tolower == 'true') or (item.AlwaysUp_tolower == 'yes')
+
+- name: Reset AlwaysUp to "false" if Invalid
+  ec2_tag:
+    region: "{{ aws_region }}"
+    resource: "{{ item.id }}"
+    state: present
+    tags:
+      AlwaysUp: "false"
+  with_items:
+    - "{{ instance_map }}"
+  when:
+    - item.AlwaysUp_tolower != "true"
+    - item.AlwaysUp_tolower != "yes"
+    - item.AlwaysUp_tolower != "false"
+    - item.AlwaysUp_tolower != "no"
+
+- name: Apply Missing AlwaysUp Tag (default is false)
+  ec2_tag:
+    region: "{{ aws_region }}"
+    resource: "{{ item.instance_id }}"
+    state: present
+    tags:
+      AlwaysUp: "false"
+  with_items:
+    - "{{ instance_results.instances }}"
+  when: item.tags.AlwaysUp is undefined

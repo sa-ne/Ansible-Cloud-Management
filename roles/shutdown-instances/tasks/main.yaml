@@ -1,0 +1,47 @@
+---
+- name: Query Running Instances
+  ec2_instance_info:
+    filters:
+      instance-state-name: running
+      "tag:AlwaysUp": "false"
+    region: "{{ aws_region }}"
+  register: instance_results
+
+- name: "DEBUG: instance_results"
+  debug:
+    var: instance_results
+    verbosity: 2
+
+- name: Reset irt_map
+  set_fact:
+    irt_map: []
+
+- name: Build Instance ID and Running Hours Dictionary for Easy Lookup
+  set_fact:
+    irt_map: >-
+      {{
+        irt_map +
+        [
+          {
+            'id': item.instance_id,
+            'runtime': (now(utc=True) - (item.launch_time | to_datetime('%Y-%m-%dT%H:%M:%S+00:00'))).total_seconds() / 3600 | int
+          }
+        ]
+      }}
+  with_items:
+    - "{{ instance_results.instances }}"
+
+- name: "DEBUG: irt_map"
+  debug:
+    var: irt_map
+    verbosity: 2
+
+- name: Shutdown Instances with AlwaysUp == "false" Running > 24 Hours
+  ec2_instance:
+    instance_ids: "{{ item.id }}"
+    region: "{{ aws_region }}"
+    state: stopped
+    wait: no
+  with_items:
+    - "{{ irt_map }}"
+  when: item.runtime > 24
