@@ -36,7 +36,7 @@
     var: irt_map
     verbosity: 2
 
-- name: Shutdown Instances with AlwaysUp == "false" Running > 24 Hours
+- name: "Shutdown Instances with AlwaysUp == false Running > {{ min_runtime_hours }} Hours"
   ec2_instance:
     instance_ids: "{{ item.id }}"
     region: "{{ aws_region }}"
@@ -44,4 +44,4 @@
     wait: no
   with_items:
     - "{{ irt_map }}"
-  when: item.runtime > 24
+  when: item.runtime > min_runtime_hours
