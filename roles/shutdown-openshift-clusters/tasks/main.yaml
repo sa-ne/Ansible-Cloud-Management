@@ -1,0 +1,38 @@
+---
+- name: Query EC2 Instances
+  ec2_instance_info:
+    region: "{{ aws_region }}"
+  register: instance_results
+
+- name: "DEBUG: instance_results"
+  debug:
+    var: instance_results
+    verbosity: 2
+    
+- name: Reset Facts
+  set_fact:
+    all_instance_tags: []
+    openshift_cluster_tags: []
+
+- name: Build List of All Instance Tags
+  set_fact:
+    all_instance_tags: "{{ all_instance_tags + item.tags | dict2items }}"
+  with_items:
+    - "{{ instance_results.instances }}"
+
+- name: "DEBUG: all_instance_tags"
+  debug:
+    var: all_instance_tags
+    verbosity: 2
+
+- name: Build List of All OpenShift Cluster Tags (kubernetes.io/cluster/*)
+  set_fact:
+    openshift_cluster_tags: "{{ openshift_cluster_tags + [item.key] }}"
+  with_items:
+    - "{{ all_instance_tags }}"
+  when:
+    - "'kubernetes.io/cluster/' in item.key"
+
+- name: Shutdown OpenShift Clusters
+  include_tasks: shutdown-instances.yaml
+  loop: "{{ openshift_cluster_tags | unique }}"

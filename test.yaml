@@ -1,0 +1,17 @@
+---
+- name: Test
+  hosts: localhost
+  gather_facts: false
+
+  vars_files:
+  - group_vars/all
+
+  tasks:
+    - name: Shutdown OpenShift Clusters with AlwaysUp == false
+      include_role:
+        name: shutdown-openshift-clusters
+      vars:
+        aws_region: "{{ aws_region_var }}"
+      loop: "{{ aws_regions }}"
+      loop_control:
+        loop_var: aws_region_var
