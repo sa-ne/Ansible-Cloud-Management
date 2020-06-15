@@ -1,4 +1,50 @@
 ---
-- name: Debug
+- name: "Query Running Instances for Cluster {{ item }}"
+  ec2_instance_info:
+    filters:
+      instance-state-name: running
+      "tag:AlwaysUp": "false"
+      tag-key: "{{ item }}"
+    region: "{{ aws_region }}"
+  register: cluster_instance_results
+
+- name: "DEBUG: cluster_instance_results"
   debug:
-    msg: "{{ item }}"
+    var: cluster_instance_results
+    verbosity: 2
+
+- name: Reset cluster_irt_map
+  set_fact:
+    cluster_irt_map: []
+
+- name: Build List of Instance Running Hours
+  set_fact:
+    cluster_irt_map: >-
+      {{
+        cluster_irt_map +
+        [
+          (now(utc=True) - (item.launch_time | to_datetime('%Y-%m-%dT%H:%M:%S+00:00'))).total_seconds() / 3600 | int
+        ]
+      }}
+  with_items:
+    - "{{ cluster_instance_results.instances }}"
+
+- name: "DEBUG: cluster_irt_map"
+  debug:
+    var: cluster_irt_map
+    verbosity: 2
+
+- name: Set Cluster Node Max Runtime
+  set_fact:
+    cluster_max_irt: "{{ cluster_irt_map | sort | last }}"
+
+- name: "DEBUG: cluster_max_irt"
+  debug:
+    var: cluster_max_irt
+    verbosity: 2
+
+- name: "MSG"
+  debug:
+    msg: "Would shutdown cluster {{ item }}"
+  when:
+    - cluster_max_irt | int > min_runtime_hours

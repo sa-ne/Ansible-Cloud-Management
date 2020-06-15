@@ -1,0 +1,10 @@
+---
+- name: Initialize Thread
+  include_tasks: initialize-thread.yaml
+  when:
+    - ghc_init_thread
+
+- name: Update Thread
+  include_tasks: update-thread.yaml
+  when:
+    - not ghc_init_thread

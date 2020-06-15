@@ -1,6 +1,9 @@
 ---
 - name: Query EC2 Instances
   ec2_instance_info:
+    filters:
+      instance-state-name: running
+      "tag:AlwaysUp": "false"
     region: "{{ aws_region }}"
   register: instance_results
 
