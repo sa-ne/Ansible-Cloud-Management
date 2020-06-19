@@ -1,0 +1,26 @@
+---
+- name: Clean Up Route53
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Query Route53 Zones
+      route53_info:
+        max_items: 250
+        query: hosted_zone
+      register: route53_results
+
+    - name: "DEBUG: route53_results"
+      debug:
+        var: route53_results
+        verbosity: 2
+
+    - name: Delete Zones
+      include_role:
+        name: route53-delete-zone
+      vars:
+        aws_zone: "{{ aws_zone_var }}"
+      loop: "{{ route53_results.HostedZones }}"
+      loop_control:
+        loop_var: aws_zone_var
+      when:
+        - aws_zone.Name == "{{ zone_name }}"

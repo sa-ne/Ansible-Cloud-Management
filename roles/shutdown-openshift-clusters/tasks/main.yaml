@@ -36,6 +36,15 @@
   when:
     - "'kubernetes.io/cluster/' in item.key"
 
+- name: Append Message to Google Hangouts Chat Thread
+  include_role:
+    name: google-hangouts-chat
+  vars:
+    ghc_init_thread: false
+    ghc_message: "\nDiscovered the Following OpenShift Clusters:\n{{ openshift_cluster_tags | unique }}"
+
 - name: Shutdown OpenShift Clusters
   include_tasks: shutdown-instances.yaml
   loop: "{{ openshift_cluster_tags | unique }}"
+  loop_control:
+    loop_var: cluster_tag

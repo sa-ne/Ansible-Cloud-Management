@@ -1,10 +1,10 @@
 ---
-- name: "Query Running Instances for Cluster {{ item }}"
+- name: "Query Running Instances for Cluster {{ cluster_tag }}"
   ec2_instance_info:
     filters:
       instance-state-name: running
       "tag:AlwaysUp": "false"
-      tag-key: "{{ item }}"
+      tag-key: "{{ cluster_tag }}"
     region: "{{ aws_region }}"
   register: cluster_instance_results
 
@@ -43,8 +43,15 @@
     var: cluster_max_irt
     verbosity: 2
 
+- name: Append Message to Google Hangouts Chat Thread
+  include_role:
+    name: google-hangouts-chat
+  vars:
+    ghc_init_thread: false
+    ghc_message: "\nCluster {{ cluster_tag }} has max instance runtime of {{ cluster_max_irt | int }} hours...shutting down."
+
 - name: "MSG"
   debug:
-    msg: "Would shutdown cluster {{ item }}"
+    msg: "Would shutdown cluster {{ cluster_tag }}"
   when:
     - cluster_max_irt | int > min_runtime_hours

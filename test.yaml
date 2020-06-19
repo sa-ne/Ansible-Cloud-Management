@@ -7,6 +7,11 @@
   - group_vars/all
 
   tasks:
+    - name: Create Google Hangouts Chat Thread
+      include_role:
+        name: google-hangouts-chat
+      vars:
+        ghc_init_thread: true
     - name: Shutdown OpenShift Clusters with AlwaysUp == false
       include_role:
         name: shutdown-openshift-clusters
