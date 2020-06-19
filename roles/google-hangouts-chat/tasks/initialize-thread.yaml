@@ -1,0 +1,33 @@
+---
+- name: Render Template
+  set_fact:
+    uri_body: "{{ lookup('template', 'templates/initial-thread-template.j2') }}"
+
+- name: "DEBUG: uri_body"
+  debug:
+    var: uri_body
+    verbosity: 2
+
+- name: Initialize Google Hangouts Chat Thread
+  uri:
+    body: "{{ uri_body }}"
+    body_format: json
+    headers:
+      Content-Type: "application/json; charset=UTF-8"
+    method: POST
+    url: "{{ ghc_webhook_url }}"
+  register: uri_results
+
+- name: "DEBUG: uri_results"
+  debug:
+    var: uri_results
+    verbosity: 2
+
+- name: Set Google Hangouts Chat Thread ID
+  set_fact:
+    ghc_thread_id: "{{ uri_results.json.thread.name }}"
+
+- name: "DEBUG: ghc_thread_id"
+  debug:
+    var: ghc_thread_id
+    verbosity: 2

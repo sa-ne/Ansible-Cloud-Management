@@ -1,0 +1,54 @@
+- name: "DEBUG: aws_zone_var.Id"
+  debug:
+    var: aws_zone_var.Id
+    verbosity: 2
+
+- name: Query Records from {{ aws_zone_var.Id }}
+  route53_info:
+    hosted_zone_id: "{{ aws_zone_var.Id }}"
+    max_items: 250
+    query: record_sets
+  register: zone_record_sets
+
+- name: "DEBUG: zone_record_sets"
+  debug:
+    var: zone_record_sets
+    verbosity: 2
+
+- name: Delete all Records Except Certain NS and SOA
+  include_tasks: delete-resource-records.yaml
+  loop: "{{ zone_record_sets.ResourceRecordSets }}"
+  loop_control:
+    loop_var: resource_item
+
+- name: Get Zone Details
+  route53_info:
+    hosted_zone_id: "{{ aws_zone_var.Id }}"
+    hosted_zone_method: details
+    query: hosted_zone
+  register: zone_details
+
+- name: "DEBUG: zone_details"
+  debug:
+    var: zone_details
+    verbosity: 2
+
+- name: "Delete Private Hosted Zone {{ aws_zone_var.Id }}"
+  route53_zone:
+    hosted_zone_id: "{{ aws_zone_var.Id | regex_replace('\/hostedzone\/') }}"
+    state: absent
+    zone: "{{ zone_name }}"
+    vpc_id: "{{ zone_details.VPCs[0].VPCId }}"
+    vpc_region: "{{ zone_details.VPCs[0].VPCRegion }}"
+  when:
+    - zone_details.VPCs[0].VPCId is defined
+    - zone_details.VPCs[0].VPCRegion is defined
+
+- name: "Delete Public Hosted Zone {{ aws_zone_var.Id }}"
+  route53_zone:
+    hosted_zone_id: "{{ aws_zone_var.Id | regex_replace('\/hostedzone\/') }}"
+    state: absent
+    zone: "{{ zone_name }}"
+  when:
+    - zone_details.VPCs[0].VPCId is not defined
+    - zone_details.VPCs[0].VPCRegion is not defined

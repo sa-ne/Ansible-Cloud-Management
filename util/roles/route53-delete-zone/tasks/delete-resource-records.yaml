@@ -1,0 +1,56 @@
+---
+- name: Reset Resource Record List
+  set_fact:
+    record_list: ""
+
+- name: Build List of Record Vales
+  set_fact:
+    record_list: "{{ record_list }},{{ item.Value }}"
+  with_items:
+    - "{{ resource_item.ResourceRecords }}"
+  when:
+    - resource_item.AliasTarget is not defined
+    - resource_item.ResourceRecords is defined
+
+- name: "DEBUG: record_list"
+  debug:
+    msg: "{{ record_list | regex_replace('^,') }}"
+
+- name: Delete Applicable Records
+  route53:
+    hosted_zone_id: "{{ aws_zone_var.Id | regex_replace('\/hostedzone\/') }}"
+    record: "{{ resource_item.Name | regex_replace('\\\\052', '*') }}"
+    state: absent
+    ttl: "{{ resource_item.TTL }}"
+    type: "{{ resource_item.Type }}"
+    value: "{{ record_list | regex_replace('^,') }}"
+  when:
+    - resource_item.Type != "NS"
+    - resource_item.Type != "SOA"
+    - resource_item.AliasTarget is not defined
+
+- name: "Delete Applicable Records (NS and SOA not {{ zone_name }})"
+  route53:
+    hosted_zone_id: "{{ aws_zone_var.Id | regex_replace('\/hostedzone\/') }}"
+    record: "{{ resource_item.Name | regex_replace('\\\\052', '*') }}"
+    state: absent
+    ttl: "{{ resource_item.TTL }}"
+    type: "{{ resource_item.Type }}"
+    value: "{{ record_list | regex_replace('^,') }}"
+  when:
+    - ((resource_item.Type == "NS") and (resource_item.Name != "{{ zone_name }}")) or ((resource_item.Type == "SOA") and (resource_item.Name != "{{ zone_name }}"))
+
+- name: Delete Applicable Records (ALIAS)
+  route53:
+    hosted_zone_id: "{{ aws_zone_var.Id | regex_replace('\/hostedzone\/') }}"
+    alias_evaluate_target_health: "{{ resource_item.AliasTarget.EvaluateTargetHealth }}"
+    alias_hosted_zone_id: "{{ resource_item.AliasTarget.HostedZoneId }}"
+    record: "{{ resource_item.Name | regex_replace('\\\\052', '*') }}"
+    state: absent
+    type: "{{ resource_item.Type }}"
+    value: "{{ resource_item.AliasTarget.DNSName }}"
+    alias: true
+  when:
+    - resource_item.Type != "NS"
+    - resource_item.Type != "SOA"
+    - resource_item.AliasTarget is defined

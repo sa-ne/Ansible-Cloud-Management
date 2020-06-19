@@ -1,0 +1,31 @@
+{
+    "cards": [
+        {
+            "header": {
+                "title": "Launching Ansible Job Template",
+                "subtitle": "{{ tower_job_template_name }}",
+                "imageUrl": "https://www.ansible.com/hubfs/2016_Images/Assets/Ansible-Mark-Small-RGB-Black.png"
+            },
+            "sections": [
+                {
+                    "widgets": [
+                        {
+                            "buttons": [
+                                {
+                                    "textButton": {
+                                        "text": "View Job Template Output",
+                                        "onClick": {
+                                            "openLink": {
+                                                "url": "{{ tower_url }}/#/jobs/playbook/{{ tower_job_id }}"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

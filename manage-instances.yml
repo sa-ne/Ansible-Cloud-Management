@@ -7,9 +7,24 @@
   - group_vars/all
 
   tasks:
+    - name: Create Google Hangouts Chat Thread
+      include_role:
+        name: google-hangouts-chat
+      vars:
+        ghc_init_thread: true
+
     - name: Normalize Instance Tags
       include_role:
         name: normalize-tags
+      vars:
+        aws_region: "{{ aws_region_var }}"
+      loop: "{{ aws_regions }}"
+      loop_control:
+        loop_var: aws_region_var
+
+    - name: Shutdown OpenShift Clusters with AlwaysUp == false
+      include_role:
+        name: shutdown-openshift-clusters
       vars:
         aws_region: "{{ aws_region_var }}"
       loop: "{{ aws_regions }}"

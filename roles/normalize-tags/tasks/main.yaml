@@ -11,7 +11,7 @@
 
 - name: "DEBUG: Show Instances Missing AlwaysUp Tag"
   debug:
-    msg: "Instance {{ item.tags.Name }} is missing tag AlwaysUp"
+    msg: "Instance {{ item.tags.Name | default('Name Tag Missing') }} is missing tag AlwaysUp"
     verbosity: 2
   with_items:
     - "{{ instance_results.instances }}"
