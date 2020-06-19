@@ -49,10 +49,6 @@
   vars:
     ghc_init_thread: false
     ghc_message: "\nCluster {{ cluster_tag }} has max instance runtime of {{ cluster_max_irt | int }} hours...shutting down."
-
-- name: "MSG"
-  debug:
-    msg: "Would shutdown cluster {{ cluster_tag }}"
   when:
     - cluster_max_irt | int > min_runtime_hours
 

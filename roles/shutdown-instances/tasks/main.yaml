@@ -23,6 +23,7 @@
         irt_map +
         [
           {
+            'name': item.tags.Name | default('Name Tag Missing'),
             'id': item.instance_id,
             'runtime': (now(utc=True) - (item.launch_time | to_datetime('%Y-%m-%dT%H:%M:%S+00:00'))).total_seconds() / 3600 | int
           }
@@ -36,12 +37,10 @@
     var: irt_map
     verbosity: 2
 
-- name: "Shutdown Instances with AlwaysUp == false Running > {{ min_runtime_hours }} Hours"
-  ec2_instance:
-    instance_ids: "{{ item.id }}"
-    region: "{{ aws_region }}"
-    state: stopped
-    wait: no
-  with_items:
-    - "{{ irt_map }}"
-  when: item.runtime > min_runtime_hours
+- name: Shutdown Instances
+  include_tasks: shutdown-instances.yaml
+  loop: "{{ irt_map }}"
+  loop_control:
+    loop_var: instance_info
+  when:
+    - irt_map | count > 0

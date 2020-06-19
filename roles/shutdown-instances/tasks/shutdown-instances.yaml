@@ -1,0 +1,17 @@
+- name: Append Message to Google Hangouts Chat Thread
+  include_role:
+    name: google-hangouts-chat
+  vars:
+    ghc_init_thread: false
+    ghc_message: "\nInstance \"{{ instance_info.name }}\" (instance_info.id) with runtime of {{ instance_info.runtime }} hours...shutting down."
+  when:
+    - instance_info.runtime > min_runtime_hours
+
+- name: "Shutdown Instances with AlwaysUp == false Running > {{ min_runtime_hours }} Hours"
+  ec2_instance:
+    instance_ids: "{{ instance_info.id }}"
+    region: "{{ aws_region }}"
+    state: stopped
+    wait: no
+  when:
+    - instance_info.runtime > min_runtime_hours
