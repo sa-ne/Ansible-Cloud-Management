@@ -12,6 +12,7 @@
         name: google-hangouts-chat
       vars:
         ghc_init_thread: true
+
     - name: Shutdown OpenShift Clusters with AlwaysUp == false
       include_role:
         name: shutdown-openshift-clusters

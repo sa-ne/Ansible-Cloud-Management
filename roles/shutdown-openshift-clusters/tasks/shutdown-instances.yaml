@@ -55,3 +55,14 @@
     msg: "Would shutdown cluster {{ cluster_tag }}"
   when:
     - cluster_max_irt | int > min_runtime_hours
+
+- name: "Shutdown Instances for Cluster {{ cluster_tag }}"
+  ec2_instance:
+    filters:
+      instance-state-name: running
+      "tag:AlwaysUp": "false"
+      tag-key: "{{ cluster_tag }}"
+    region: "{{ aws_region }}"
+    state: stopped
+  when:
+    - cluster_max_irt | int > min_runtime_hours
