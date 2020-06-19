@@ -60,5 +60,6 @@
       tag-key: "{{ cluster_tag }}"
     region: "{{ aws_region }}"
     state: stopped
+    wait: false
   when:
     - cluster_max_irt | int > min_runtime_hours

@@ -8,7 +8,7 @@
     var: uri_body
     verbosity: 2
 
-- name: Initialize Google Hangouts Chat Thread
+- name: Update Google Hangouts Chat Thread
   uri:
     body: "{{ uri_body }}"
     body_format: json
