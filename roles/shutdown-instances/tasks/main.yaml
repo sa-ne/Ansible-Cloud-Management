@@ -44,3 +44,12 @@
     loop_var: instance_info
   when:
     - irt_map | count > 0
+
+- name: Append Message to Google Hangouts Chat Thread
+  include_role:
+    name: google-hangouts-chat
+  vars:
+    ghc_init_thread: false
+    ghc_message: "\nNo Instances to Shutdown in {{ aws_region }}.\n"
+  when:
+    - irt_map | count == 0
