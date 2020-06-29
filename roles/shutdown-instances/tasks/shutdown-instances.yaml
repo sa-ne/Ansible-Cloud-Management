@@ -3,7 +3,7 @@
     name: google-hangouts-chat
   vars:
     ghc_init_thread: false
-    ghc_message: "\nInstance \\\"{{ instance_info.name }}\\\" (instance_info.id) with runtime of {{ instance_info.runtime | int }} hours...shutting down."
+    ghc_message: "\nInstance \\\"{{ instance_info.name }}\\\" ({{ instance_info.id }}) with runtime of {{ instance_info.runtime | int }} hours...shutting down."
   when:
     - instance_info.runtime > min_runtime_hours
 
